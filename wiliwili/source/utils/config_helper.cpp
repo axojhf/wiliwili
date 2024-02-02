@@ -119,6 +119,8 @@ std::unordered_map<SettingItem, ProgramOption> ProgramConfig::SETTING_MAP = {
     {SettingItem::PLAYER_HWDEC, {"player_hwdec", {}, {}, 0}},
 #endif
     {SettingItem::PLAYER_HWDEC_CUSTOM, {"player_hwdec_custom", {}, {}, 0}},
+    {SettingItem::MPV_OPTION_VO, {"mpv_option_vo", {}, {}, 0}},
+    {SettingItem::MPV_OPTION_GPUCONTEXT, {"mpv_option_gpucontext", {}, {}, 0}},
     {SettingItem::PLAYER_EXIT_FULLSCREEN_ON_END, {"player_exit_fullscreen_on_end", {}, {}, 1}},
     {SettingItem::OPENCC_ON, {"opencc", {}, {}, 1}},
     {SettingItem::DANMAKU_ON, {"danmaku", {}, {}, 1}},
@@ -533,6 +535,8 @@ void ProgramConfig::load() {
 
     // 初始化自定义的硬件加速方案
     MPVCore::PLAYER_HWDEC_METHOD = getSettingItem(SettingItem::PLAYER_HWDEC_CUSTOM, MPVCore::PLAYER_HWDEC_METHOD);
+    MPVCore::MPV_OPTION_VO = getSettingItem(SettingItem::MPV_OPTION_VO, MPVCore::MPV_OPTION_VO);
+    MPVCore::MPV_OPTION_GPUCONTEXT = getSettingItem(SettingItem::MPV_OPTION_GPUCONTEXT, MPVCore::MPV_OPTION_GPUCONTEXT);
 
     // 播放结束时自动退出全屏
     VideoView::EXIT_FULLSCREEN_ON_END = getBoolOption(SettingItem::PLAYER_EXIT_FULLSCREEN_ON_END);

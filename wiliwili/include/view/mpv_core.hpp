@@ -343,7 +343,9 @@ public:
 
     // 硬件解码
     inline static bool HARDWARE_DEC               = true;
-    inline static std::string PLAYER_HWDEC_METHOD = "d3d11va";
+    inline static std::string PLAYER_HWDEC_METHOD = "auto";
+    inline static std::string MPV_OPTION_VO = "gpu";
+    inline static std::string MPV_OPTION_GPUCONTEXT = "win";
 
     // 此变量为真时，加载结束后自动播放视频
     inline static bool AUTO_PLAY = true;

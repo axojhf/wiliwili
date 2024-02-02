@@ -97,6 +97,8 @@ enum class SettingItem {
     HTTP_PROXY,
     HTTP_PROXY_STATUS,
     TLS_VERIFY,
+    MPV_OPTION_VO,
+    MPV_OPTION_GPUCONTEXT,
 };
 
 class APPVersion : public brls::Singleton<APPVersion> {

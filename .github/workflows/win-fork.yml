@@ -108,10 +108,10 @@ jobs:
             -DWEBP_BUILD_EXTRAS=OFF
           cmake --build build
           cmake --install build
-      - name: Copy dll
-        if: matrix.arch == 'x86_64'
-        shell: pwsh
-        run: |
+      # - name: Copy dll
+      #   if: matrix.arch == 'x86_64'
+      #   shell: pwsh
+      #   run: |
           # (new-object System.Net.WebClient).DownloadFile('https://github.com/axojhf/wiliwili/releases/download/deps/mpv-dev-x86_64-v3-20240128-git-c6ccabe.7z','mpv-dev.7z')
           # 7z x -aoa -oC:/ mpv-dev.7z
           # cp C:/libmpv-2.dll resources/
@@ -130,7 +130,8 @@ jobs:
           cmake --build build
           strip build/wiliwili.exe
           7z a ${{ needs.version.outputs.DIST_EXE }}-${{ matrix.arch }}.7z \
-            ./build/wiliwili.exe README.md ./build/resources
+            ./build/wiliwili.exe README.md 
+          # ./build/resources
       - name: Upload dist
         uses: actions/upload-artifact@v3
         with:
