@@ -302,7 +302,9 @@ void MPVCore::init() {
     } else {
         mpvSetOptionString(mpv, "cache", "no");
     }
-
+    //额外添加
+    mpvSetOptionString(mpv, "vo", "gpu");
+    mpvSetOptionString(mpv, "gpu-context", "d3d11");
     // hardware decoding
     if (HARDWARE_DEC) {
 #ifdef __SWITCH__
