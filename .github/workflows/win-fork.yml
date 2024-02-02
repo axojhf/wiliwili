@@ -63,7 +63,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { arch: x86_64, msystem: MINGW64, cmake: "-DUSE_LIBROMFS=ON -DMPV_BUNDLE_DLL=ON" }
+          - { arch: x86_64, msystem: MINGW64, cmake: "" }
         arch: [ x86_64]
     env:
       MSYSTEM: ${{ matrix.msystem }}
@@ -82,7 +82,6 @@ jobs:
           pacman -S --needed --noconfirm --noprogressbar \
             ${MINGW_PACKAGE_PREFIX}-gcc \
             ${MINGW_PACKAGE_PREFIX}-ninja
-
           curl -LO https://github.com/xfangfang/wiliwili/releases/download/v0.1.0/${MINGW_PACKAGE_PREFIX}-mpv-0.36.0-3-any.pkg.tar.zst
           pacman -U --noconfirm *.pkg.tar.zst
       - name: Update gamepad db
@@ -113,9 +112,9 @@ jobs:
         if: matrix.arch == 'x86_64'
         shell: pwsh
         run: |
-          (new-object System.Net.WebClient).DownloadFile('https://github.com/axojhf/wiliwili/releases/download/deps/mpv-dev-x86_64-v3-20240128-git-c6ccabe.7z','mpv-dev.7z')
-          7z x -aoa -oC:/ mpv-dev.7z
-          cp C:/libmpv-2.dll resources/
+          # (new-object System.Net.WebClient).DownloadFile('https://github.com/axojhf/wiliwili/releases/download/deps/mpv-dev-x86_64-v3-20240128-git-c6ccabe.7z','mpv-dev.7z')
+          # 7z x -aoa -oC:/ mpv-dev.7z
+          # cp C:/libmpv-2.dll resources/
       - name: Build
         run: |
           cmake -B build -G Ninja ${{ matrix.cmake }} \
@@ -131,12 +130,7 @@ jobs:
           cmake --build build
           strip build/wiliwili.exe
           7z a ${{ needs.version.outputs.DIST_EXE }}-${{ matrix.arch }}.7z \
-            ./build/wiliwili.exe README.md 
-      - name: Append resources
-        if: matrix.arch == 'x86'
-        run: | 
-          7z a ${{ needs.version.outputs.DIST_EXE }}-${{ matrix.arch }}.7z \
-            ./build/resources ${MINGW_PREFIX}/bin/libmpv-2.dll
+            ./build/wiliwili.exe README.md ./build/resources
       - name: Upload dist
         uses: actions/upload-artifact@v3
         with:
