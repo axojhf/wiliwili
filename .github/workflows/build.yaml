@@ -173,7 +173,10 @@ jobs:
       - name: Copy dll
         if: matrix.arch == 'x86_64'
         run: |
-          cp ${MINGW_PREFIX}/bin/libmpv-2.dll resources/
+          (new-object System.Net.WebClient).DownloadFile('https://github.com/axojhf/wiliwili/releases/download/deps/mpv-dev-x86_64-v3-20240128-git-c6ccabe.7z','mpv-dev.7z')
+          7z x -aoa -oC:\ mpv-dev.7z
+          ls C:/
+          cp C:/libmpv-2.dll resources/
       - name: Build
         run: |
           cmake -B build -G Ninja ${{ matrix.cmake }} \
