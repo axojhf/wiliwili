@@ -1,0 +1,148 @@
+name: Build wiliwili
+
+on:
+  # push:
+  #   branches:
+  #     - yoga
+  #     - dev
+  # pull_request:
+  workflow_dispatch:
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.info.outputs.version }}
+      standard_version: ${{ steps.info.outputs.standard_version }}
+      DIST_EXE: ${{ steps.info.outputs.DIST_EXE }}
+      DIST_UWP: ${{ steps.info.outputs.DIST_UWP }}
+      DIST_NRO: ${{ steps.info.outputs.DIST_NRO }}
+      DIST_PS4: ${{ steps.info.outputs.DIST_PS4 }}
+      DIST_DMG_PREFIX: ${{ steps.info.outputs.DIST_DMG_PREFIX }}
+      DIST_INTEL_DMG: ${{ steps.info.outputs.DIST_INTEL_DMG }}
+      DIST_ARM_DMG: ${{ steps.info.outputs.DIST_ARM_DMG }}
+      DIST_UNIVERSAL_DMG: ${{ steps.info.outputs.DIST_UNIVERSAL_DMG }}
+      DIST_FLATPAK_X86_64: ${{ steps.info.outputs.DIST_FLATPAK_X86_64 }}
+      DIST_FLATPAK_AARCH64_GL: ${{ steps.info.outputs.DIST_FLATPAK_AARCH64_GL }}
+      DIST_FLATPAK_AARCH64_GLES2: ${{ steps.info.outputs.DIST_FLATPAK_AARCH64_GLES2 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Debug version
+        run: |
+          export VERSION=`git rev-parse --short HEAD`
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Release version
+        if: github.event.inputs.release == 'true' && github.event.inputs.release != 'false' && !cancelled()
+        run: |
+          export VERSION="${{ github.event.inputs.version }}"
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Version
+        id: info
+        env:
+          VERSION: ${{ env.VERSION }}
+        run: |
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "DIST_EXE=wiliwili-Windows-${VERSION}" >> $GITHUB_OUTPUT
+          echo "DIST_UWP=wiliwili-windows-x64-uwp-${VERSION}" >> $GITHUB_OUTPUT
+          echo "DIST_NRO=wiliwili-NintendoSwitch-${VERSION}" >> $GITHUB_OUTPUT
+          echo "DIST_PS4=wiliwili-PS4-${VERSION}" >> $GITHUB_OUTPUT
+          echo "DIST_DMG_PREFIX=wiliwili-macOS" >> $GITHUB_OUTPUT
+          echo "DIST_INTEL_DMG=wiliwili-macOS-IntelChip-${VERSION}" >> $GITHUB_OUTPUT
+          echo "DIST_ARM_DMG=wiliwili-macOS-AppleSilicon-${VERSION}" >> $GITHUB_OUTPUT
+          echo "DIST_UNIVERSAL_DMG=wiliwili-macOS-Universal-${VERSION}" >> $GITHUB_OUTPUT
+          echo "DIST_FLATPAK_X86_64=wiliwili-Linux-${VERSION}-x86_64" >> $GITHUB_OUTPUT
+          echo "DIST_FLATPAK_AARCH64_GL=wiliwili-Linux-${VERSION}-gl-aarch64" >> $GITHUB_OUTPUT
+          echo "DIST_FLATPAK_AARCH64_GLES2=wiliwili-Linux-${VERSION}-gles2-aarch64" >> $GITHUB_OUTPUT
+          echo $VERSION
+          echo "${{  github.event.inputs.version }}"
+  build-win:
+    needs: [ version ]
+    runs-on: windows-2019
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x86_64, msystem: MINGW64, cmake: "-DUSE_LIBROMFS=ON -DMPV_BUNDLE_DLL=ON" }
+        arch: [ x86_64]
+    env:
+      MSYSTEM: ${{ matrix.msystem }}
+      MSYS2_PATH_TYPE: inherit
+    defaults:
+      run:
+        shell: C:\shells\msys2bash.cmd {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Install dependency
+        run: |
+          pacman -S --needed --noconfirm --noprogressbar \
+            ${MINGW_PACKAGE_PREFIX}-gcc \
+            ${MINGW_PACKAGE_PREFIX}-ninja
+
+          curl -LO https://github.com/xfangfang/wiliwili/releases/download/v0.1.0/${MINGW_PACKAGE_PREFIX}-mpv-0.36.0-3-any.pkg.tar.zst
+          pacman -U --noconfirm *.pkg.tar.zst
+      - name: Update gamepad db
+        run: |
+          BRLS_GLFW=library/borealis/library/lib/extern/glfw
+          cmake -P ${BRLS_GLFW}/CMake/GenerateMappings.cmake ${BRLS_GLFW}/src/mappings.h.in ${BRLS_GLFW}/src/mappings.h
+      - name: Build dependency
+        run: |
+          curl -sL https://github.com/webmproject/libwebp/archive/v1.3.2.tar.gz | tar zxf - -C /tmp
+          cd /tmp/libwebp-1.3.2
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DWEBP_BUILD_ANIM_UTILS=OFF \
+            -DWEBP_BUILD_CWEBP=OFF \
+            -DWEBP_BUILD_DWEBP=OFF \
+            -DWEBP_BUILD_GIF2WEBP=OFF \
+            -DWEBP_BUILD_IMG2WEBP=OFF \
+            -DWEBP_BUILD_VWEBP=OFF \
+            -DWEBP_BUILD_WEBPINFO=OFF \
+            -DWEBP_BUILD_WEBPMUX=OFF \
+            -DWEBP_BUILD_LIBWEBPMUX=OFF \
+            -DWEBP_BUILD_EXTRAS=OFF
+          cmake --build build
+          cmake --install build
+      - name: Copy dll
+        if: matrix.arch == 'x86_64'
+        shell: pwsh
+        run: |
+          (new-object System.Net.WebClient).DownloadFile('https://github.com/axojhf/wiliwili/releases/download/deps/mpv-dev-x86_64-v3-20240128-git-c6ccabe.7z','mpv-dev.7z')
+          7z x -aoa -oC:/ mpv-dev.7z
+          ls C:/
+          cp C:/libmpv-2.dll resources/
+      - name: Build
+        run: |
+          cmake -B build -G Ninja ${{ matrix.cmake }} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPLATFORM_DESKTOP=ON \
+            -DWIN32_TERMINAL=OFF \
+            -DCURL_DISABLE_PROGRESS_METER=ON \
+            -DUSE_LIBIDN2=OFF \
+            -DUSE_WIN32_IDN=ON \
+            -DCURL_USE_LIBSSH2=OFF \
+            -DCURL_USE_LIBPSL=OFF \
+            -DZLIB_USE_STATIC_LIBS=ON
+          cmake --build build
+          strip build/wiliwili.exe
+          7z a -mx=9 -tzip ${{ needs.version.outputs.DIST_EXE }}-${{ matrix.arch }}.zip \
+            ./build/wiliwili.exe README.md 
+      - name: Append resources
+        if: matrix.arch == 'x86'
+        run: | 
+          7z a -mx=9 -tzip  ${{ needs.version.outputs.DIST_EXE }}-${{ matrix.arch }}.zip \
+            ./build/resources ${MINGW_PREFIX}/bin/libmpv-2.dll
+      - name: Upload dist
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ needs.version.outputs.DIST_EXE }}-${{ matrix.arch }}
+          path: "${{ needs.version.outputs.DIST_EXE }}-${{ matrix.arch }}.zip"
