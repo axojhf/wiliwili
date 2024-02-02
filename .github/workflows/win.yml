@@ -1,11 +1,6 @@
-name: Build wiliwili
+name: Build Win wiliwili
 
 on:
-  # push:
-  #   branches:
-  #     - yoga
-  #     - dev
-  # pull_request:
   workflow_dispatch:
 
 jobs:
