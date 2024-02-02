@@ -342,8 +342,8 @@ public:
     inline static bool TERMINAL = false;
 
     // 硬件解码
-    inline static bool HARDWARE_DEC               = false;
-    inline static std::string PLAYER_HWDEC_METHOD = "auto-safe";
+    inline static bool HARDWARE_DEC               = true;
+    inline static std::string PLAYER_HWDEC_METHOD = "d3d11va";
 
     // 此变量为真时，加载结束后自动播放视频
     inline static bool AUTO_PLAY = true;
