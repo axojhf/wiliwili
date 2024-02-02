@@ -1,11 +1,11 @@
 name: Build wiliwili
 
 on:
-  push:
-    branches:
-      - yoga
-      - dev
-  pull_request:
+  # push:
+  #   branches:
+  #     - yoga
+  #     - dev
+  # pull_request:
   workflow_dispatch:
     inputs:
       ssh_darwin:
