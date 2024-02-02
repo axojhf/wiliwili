@@ -1,6 +1,8 @@
 name: Build Win wiliwili
 
 on:
+  push:
+    branches: ["win"]
   workflow_dispatch:
 
 jobs:
